@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Quiz</title>
+    <title>Shagun's Favorites Quiz</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="quiz-container">
         <div id="quiz-box">
-            <h2 id="question-text">Loading question...</h2>
+            <h1 class="quiz-title">💙 Friendship & Love 💙</h1>
+            <h2 id="question-text">Loading...</h2>
             
             <div class="options-container">
                 <button class="option-btn" onclick="checkAnswer(0)"></button>
@@ -24,18 +25,20 @@
     </div>
 
     <script>
-        // Paste your questions and answers here!
         const quizData = [
-            {
-                q: "What is the capital of France?",
-                options: ["Berlin", "Madrid", "Paris"],
-                correct: 2
-            },
-            {
-                q: "Which planet is known as the Red Planet?",
-                options: ["Mars", "Jupiter", "Venus"],
-                correct: 0
-            }
+            { q: "What is Shagun's favorite food?", options: ["Pizza", "Vadapav", "Pasta"], correct: 1 },
+            { q: "What are her favorite travel places?", options: ["Manali & Ladakh", "Goa & Kerala", "Paris & Dubai"], correct: 0 },
+            { q: "Which dairy confections does she love?", options: ["Cakes & Pastries", "Chocolate & Ice cream", "Cheese & Yogurt"], correct: 1 },
+            { q: "What is her favorite car?", options: ["BMW", "Audi", "Mercedes"], correct: 2 },
+            { q: "What is her favorite bike?", options: ["Royal Enfield", "Hayabusa", "KTM"], correct: 0 },
+            { q: "What is her favorite hobby?", options: ["Reading", "Travelling", "Painting"], correct: 1 },
+            { q: "What are the things she wants to fly?", options: ["Kites & Drones", "Birds & Balloons", "Planes & Fighter Jets"], correct: 2 },
+            { q: "What is her favorite weather (sometimes)?", options: ["Sunny", "Rainy", "Snowy"], correct: 1 },
+            { q: "What is her favorite animal?", options: ["Cat", "Rabbit", "Dog"], correct: 2 }, // Added Dog as a classic choice
+            { q: "What is her favorite clothes category?", options: ["Western", "Casual", "Traditional"], correct: 2 },
+            { q: "What is her favorite juice?", options: ["Orange, Banana, Mango", "Apple & Grape", "Pineapple"], correct: 0 },
+            { q: "What is her favorite shake?", options: ["Vanilla", "Chocolate & Strawberry", "Blueberry"], correct: 1 },
+            { q: "If she goes to the mall, what does she buy first?", options: ["Makeup", "Shoes", "Jewelry"], correct: 1 }
         ];
 
         let currentIdx = 0;
@@ -64,13 +67,13 @@
 
             if (selected === current.correct) {
                 buttons[selected].classList.add('correct');
-                feedback.innerText = "Correct! 🎉";
-                feedback.style.color = "#2ecc71";
+                feedback.innerText = "Correct! You know her well! ✨";
+                feedback.style.color = "#2c3e50";
             } else {
                 buttons[selected].classList.add('wrong');
                 buttons[current.correct].classList.add('correct');
-                feedback.innerText = "Wrong! ❌";
-                feedback.style.color = "#e74c3c";
+                feedback.innerText = "Oops! Not quite right. 💙";
+                feedback.style.color = "#5dade2";
             }
 
             feedback.classList.remove('hidden');
@@ -78,10 +81,13 @@
             if (currentIdx < quizData.length - 1) {
                 document.getElementById('next-btn').classList.remove('hidden');
                 currentIdx++;
+            } else {
+                document.getElementById('next-btn').innerText = "Quiz Finished!";
+                document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('next-btn').onclick = null;
             }
         }
 
-        // Initialize first question
         loadQuestion();
     </script>
 </body>
