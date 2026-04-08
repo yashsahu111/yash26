@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="quiz-container">
+        <div id="quiz-box">
+            <h2 id="question-text">Loading question...</h2>
+            
+            <div class="options-container">
+                <button class="option-btn" onclick="checkAnswer(0)"></button>
+                <button class="option-btn" onclick="checkAnswer(1)"></button>
+                <button class="option-btn" onclick="checkAnswer(2)"></button>
+            </div>
+
+            <div id="feedback" class="hidden"></div>
+            <button id="next-btn" class="hidden" onclick="loadQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <script>
+        // Paste your questions and answers here!
+        const quizData = [
+            {
+                q: "What is the capital of France?",
+                options: ["Berlin", "Madrid", "Paris"],
+                correct: 2
+            },
+            {
+                q: "Which planet is known as the Red Planet?",
+                options: ["Mars", "Jupiter", "Venus"],
+                correct: 0
+            }
+        ];
+
+        let currentIdx = 0;
+
+        function loadQuestion() {
+            const current = quizData[currentIdx];
+            document.getElementById('question-text').innerText = current.q;
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            buttons.forEach((btn, index) => {
+                btn.innerText = current.options[index];
+                btn.disabled = false;
+                btn.classList.remove('correct', 'wrong');
+            });
+
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+        }
+
+        function checkAnswer(selected) {
+            const current = quizData[currentIdx];
+            const buttons = document.querySelectorAll('.option-btn');
+            const feedback = document.getElementById('feedback');
+            
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selected === current.correct) {
+                buttons[selected].classList.add('correct');
+                feedback.innerText = "Correct! 🎉";
+                feedback.style.color = "#2ecc71";
+            } else {
+                buttons[selected].classList.add('wrong');
+                buttons[current.correct].classList.add('correct');
+                feedback.innerText = "Wrong! ❌";
+                feedback.style.color = "#e74c3c";
+            }
+
+            feedback.classList.remove('hidden');
+            
+            if (currentIdx < quizData.length - 1) {
+                document.getElementById('next-btn').classList.remove('hidden');
+                currentIdx++;
+            }
+        }
+
+        // Initialize first question
+        loadQuestion();
+    </script>
+</body>
+</html>
