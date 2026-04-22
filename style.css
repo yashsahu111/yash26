@@ -2,103 +2,82 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    /* Prevents pulling down to refresh on mobile */
+    overscroll-behavior: none;
 }
 
 body {
-    /* Soft Blue Gradient Theme */
-    background: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 100%);
+    /* Pink gradient background */
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+    color: #880e4f;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Important for mobile 3D interaction */
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    max-width: 500px; /* Limits width on tablets/desktops */
     padding: 20px;
 }
 
-.quiz-container {
-    width: 100%;
-    max-width: 400px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 30px;
-    border-radius: 25px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+.header {
     text-align: center;
-    border: 1px solid #bae6fd;
+    padding: 10px 0;
+    flex: 0 0 auto;
 }
 
-.quiz-title {
-    font-size: 1.2rem;
-    color: #0369a1;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
+.header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    color: #ad1457;
 }
 
-h2 {
-    margin-bottom: 25px;
-    font-size: 1.5rem;
-    color: #1e293b;
-    font-weight: 600;
+.header p {
+    font-size: 1rem;
+    opacity: 0.8;
 }
 
-.options-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.option-btn {
-    padding: 16px;
-    font-size: 1.05rem;
-    border: 2px solid #e0f2fe;
-    border-radius: 15px;
-    background: white;
-    color: #075985;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.option-btn:hover {
-    background-color: #f0f9ff;
-    border-color: #7dd3fc;
-}
-
-/* Success & Error Colors */
-.option-btn.correct {
-    background-color: #dcfce7;
-    border-color: #22c55e;
-    color: #14532d;
-}
-
-.option-btn.wrong {
-    background-color: #fee2e2;
-    border-color: #ef4444;
-    color: #7f1d1d;
-}
-
-#feedback {
-    margin-top: 25px;
-    font-weight: 600;
-    font-size: 1.1rem;
-}
-
-#next-btn {
-    margin-top: 25px;
+/* The area where the 3D cake lives */
+#cake-container {
+    flex: 1 1 auto; /* Takes up all available space */
     width: 100%;
-    padding: 14px;
-    background-color: #0284c7;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    touch-action: none; /* Crucial for Three.js touch events */
+}
+
+.footer {
+    text-align: center;
+    padding: 20px 0;
+    flex: 0 0 auto;
+}
+
+#reset-btn {
+    padding: 12px 24px;
+    background-color: #ec407a;
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 1.1rem;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(236, 64, 122, 0.4);
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+    transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent; /* Removes mobile tap highlight */
 }
 
-#next-btn:hover {
-    background-color: #0369a1;
-}
-
-.hidden {
-    display: none;
+#reset-btn:active {
+    background-color: #d81b60;
+    transform: scale(0.98);
 }
