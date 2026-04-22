@@ -2,26 +2,187 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Birthday Cake Cutting</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Cake for You</title>
+    <style>
+        :root {
+            --pink-main: #ff85a2;
+            --pink-dark: #f06292;
+            --pink-light: #fce4ec;
+        }
+
+        body {
+            background: var(--pink-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            color: #ad1457;
+        }
+
+        /* --- THE CAKE CONTAINER --- */
+        .cake-stage {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cake {
+            position: relative;
+            width: 200px;
+            height: 150px;
+            background: var(--pink-main);
+            border-radius: 100px / 40px;
+            box-shadow: 0 10px 0 var(--pink-dark);
+            cursor: pointer;
+            transition: transform 0.5s ease;
+        }
+
+        /* The Top of the Cake */
+        .cake::before {
+            content: "";
+            position: absolute;
+            top: -20px;
+            left: 0;
+            width: 200px;
+            height: 80px;
+            background: #ffb1c1;
+            border-radius: 100px / 40px;
+        }
+
+        /* The Knife */
+        .knife {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            width: 10px;
+            height: 120px;
+            background: silver;
+            border-radius: 5px;
+            transform: translateX(-50%) rotate(0deg);
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+
+        .knife::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -5px;
+            width: 20px;
+            height: 40px;
+            background: #ad1457;
+            border-radius: 5px;
+        }
+
+        /* Animation Classes */
+        .cutting .knife {
+            opacity: 1;
+            top: -20px;
+            transform: translateX(-50%) rotate(20deg);
+        }
+
+        .cut-complete .cake {
+            background: linear-gradient(to right, var(--pink-main) 48%, transparent 48%, transparent 52%, var(--pink-main) 52%);
+            transform: scale(1.05);
+        }
+
+        .message {
+            margin-top: 40px;
+            font-weight: bold;
+            color: #ad1457;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: 0.5s;
+        }
+
+        .show-msg { opacity: 1; }
+
+        #reset-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            background: var(--pink-dark);
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <div class="header">
-            <h1>Happy Birthday! 🎂</h1>
-            <p>Tap the cake to cut a slice</p>
-        </div>
-
-        <div id="cake-container"></div>
-
-        <div class="footer">
-            <button id="reset-btn">Make a New Cake</button>
-        </div>
+    <div class="header">
+        <h1>For Someone Special 🎂</h1>
+        <p>Tap the cake to cut it!</p>
     </div>
 
-    <script src="cake.js"></script>
+    <div class="cake-stage" id="stage">
+        <div class="knife" id="knife"></div>
+        <div class="cake" id="cake"></div>
+    </div>
+
+    <div class="message" id="msg">Happy Birthday! Slice of love! ❤️</div>
+
+    <button id="reset-btn" onclick="resetCake()">Start Over</button>
+
+    <script>
+        const stage = document.getElementById('stage');
+        const cake = document.getElementById('cake');
+        const msg = document.getElementById('msg');
+
+        cake.addEventListener('click', () => {
+            // Step 1: Show Knife
+            stage.classList.add('cutting');
+            
+            // Step 2: Slice Animation
+            setTimeout(() => {
+                stage.classList.remove('cutting');
+                stage.classList.add('cut-complete');
+                msg.classList.add('show-msg');
+                
+                // Create Confetti Effect
+                for(let i=0; i<30; i++) {
+                    createConfetti();
+                }
+            }, 800);
+        });
+
+        function createConfetti() {
+            const c = document.createElement('div');
+            c.innerText = "🌸";
+            c.style.position = "absolute";
+            c.style.left = Math.random() * 100 + "vw";
+            c.style.top = "-20px";
+            c.style.fontSize = Math.random() * 20 + 10 + "px";
+            c.style.transition = "transform 2s linear, top 2s linear";
+            document.body.appendChild(c);
+
+            setTimeout(() => {
+                c.style.top = "100vh";
+                c.style.transform = `rotate(${Math.random() * 360}deg)`;
+            }, 10);
+
+            setTimeout(() => c.remove(), 2000);
+        }
+
+        function resetCake() {
+            stage.classList.remove('cutting', 'cut-complete');
+            msg.classList.remove('show-msg');
+        }
+    </script>
 </body>
 </html>
