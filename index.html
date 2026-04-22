@@ -2,187 +2,296 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Birthday Cake for You</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Realistic Birthday Cake Cutting</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
-            --pink-main: #ff85a2;
-            --pink-dark: #f06292;
-            --pink-light: #fce4ec;
+            --pink-bg-light: #fce4ec;
+            --pink-bg-dark: #f8bbd0;
+            --pink-text: #ad1457;
         }
 
         body {
-            background: var(--pink-light);
+            background: linear-gradient(135deg, var(--pink-bg-light) 0%, var(--pink-bg-dark) 100%);
+            color: var(--pink-text);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             height: 100vh;
+            width: 100vw;
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
-            touch-action: manipulation;
+            overscroll-behavior: none;
         }
 
-        .header {
+        .ui-panel {
             text-align: center;
-            margin-bottom: 50px;
-            color: #ad1457;
-        }
-
-        /* --- THE CAKE CONTAINER --- */
-        .cake-stage {
-            position: relative;
-            width: 250px;
-            height: 250px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .cake {
-            position: relative;
-            width: 200px;
-            height: 150px;
-            background: var(--pink-main);
-            border-radius: 100px / 40px;
-            box-shadow: 0 10px 0 var(--pink-dark);
-            cursor: pointer;
-            transition: transform 0.5s ease;
-        }
-
-        /* The Top of the Cake */
-        .cake::before {
-            content: "";
-            position: absolute;
-            top: -20px;
-            left: 0;
-            width: 200px;
-            height: 80px;
-            background: #ffb1c1;
-            border-radius: 100px / 40px;
-        }
-
-        /* The Knife */
-        .knife {
-            position: absolute;
-            top: -100px;
-            left: 50%;
-            width: 10px;
-            height: 120px;
-            background: silver;
-            border-radius: 5px;
-            transform: translateX(-50%) rotate(0deg);
-            opacity: 0;
-            transition: all 0.5s ease;
+            padding: 20px;
+            width: 100%;
+            pointer-events: none; /* Let clicks pass to the 3D canvas */
             z-index: 10;
         }
 
-        .knife::after {
-            content: "";
+        .header h1 {
+            font-size: 1.8rem;
+            margin: 0 0 5px 0;
+            opacity: 0.9;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.7;
+            margin: 0;
+        }
+
+        /* The canvas container for Three.js */
+        #cake-container {
             position: absolute;
             top: 0;
-            left: -5px;
-            width: 20px;
-            height: 40px;
-            background: #ad1457;
-            border-radius: 5px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
-
-        /* Animation Classes */
-        .cutting .knife {
-            opacity: 1;
-            top: -20px;
-            transform: translateX(-50%) rotate(20deg);
-        }
-
-        .cut-complete .cake {
-            background: linear-gradient(to right, var(--pink-main) 48%, transparent 48%, transparent 52%, var(--pink-main) 52%);
-            transform: scale(1.05);
-        }
-
-        .message {
-            margin-top: 40px;
-            font-weight: bold;
-            color: #ad1457;
-            font-size: 1.2rem;
-            opacity: 0;
-            transition: 0.5s;
-        }
-
-        .show-msg { opacity: 1; }
 
         #reset-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            border: none;
-            background: var(--pink-dark);
+            pointer-events: auto; /* Enable clicks on the button */
+            padding: 12px 25px;
+            background-color: #ec407a;
             color: white;
-            border-radius: 20px;
+            border: none;
+            border-radius: 25px;
             font-weight: bold;
+            box-shadow: 0 4px 10px rgba(236, 64, 122, 0.4);
+            cursor: pointer;
+            visibility: hidden; /* Start hidden */
+            transition: all 0.3s;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
+    <div class="ui-panel header">
         <h1>For Someone Special 🎂</h1>
-        <p>Tap the cake to cut it!</p>
+        <p>Tap the cake to cut a real slice!</p>
     </div>
 
-    <div class="cake-stage" id="stage">
-        <div class="knife" id="knife"></div>
-        <div class="cake" id="cake"></div>
+    <div id="cake-container"></div>
+
+    <div class="ui-panel footer">
+        <button id="reset-btn">Reset Cake</button>
     </div>
-
-    <div class="message" id="msg">Happy Birthday! Slice of love! ❤️</div>
-
-    <button id="reset-btn" onclick="resetCake()">Start Over</button>
 
     <script>
-        const stage = document.getElementById('stage');
-        const cake = document.getElementById('cake');
-        const msg = document.getElementById('msg');
+        // THREE.js Scene Setup
+        let scene, camera, renderer, container;
+        let cakeGroup, cakeGeometry, cakeMesh, sliceMesh, plateMesh;
+        let isCut = false;
+        let resetBtn = document.getElementById('reset-btn');
 
-        cake.addEventListener('click', () => {
-            // Step 1: Show Knife
-            stage.classList.add('cutting');
-            
-            // Step 2: Slice Animation
-            setTimeout(() => {
-                stage.classList.remove('cutting');
-                stage.classList.add('cut-complete');
-                msg.classList.add('show-msg');
-                
-                // Create Confetti Effect
-                for(let i=0; i<30; i++) {
-                    createConfetti();
-                }
-            }, 800);
+        // Material Definitions for Realistic Textures
+        // 1. Frosting (Top & Sides) - Pink
+        const frostingMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf48fb1,
+            roughness: 0.8,
+            metalness: 0.1,
+            flatShading: false
         });
 
-        function createConfetti() {
-            const c = document.createElement('div');
-            c.innerText = "🌸";
-            c.style.position = "absolute";
-            c.style.left = Math.random() * 100 + "vw";
-            c.style.top = "-20px";
-            c.style.fontSize = Math.random() * 20 + 10 + "px";
-            c.style.transition = "transform 2s linear, top 2s linear";
-            document.body.appendChild(c);
+        // 2. Interior (When cut) - Sponge Cake color
+        const spongeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xfff3e0,
+            roughness: 0.9,
+            metalness: 0.0
+        });
 
-            setTimeout(() => {
-                c.style.top = "100vh";
-                c.style.transform = `rotate(${Math.random() * 360}deg)`;
-            }, 10);
+        // 3. Plate (White)
+        const plateMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 0.2,
+            metalness: 0.0
+        });
 
-            setTimeout(() => c.remove(), 2000);
+        function init() {
+            container = document.getElementById('cake-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // SCENE & CAMERA
+            scene = new THREE.Scene();
+            scene.background = null; // Use CSS background
+
+            camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
+            camera.position.set(0, 1.8, 3.5);
+            camera.lookAt(0, 0.5, 0);
+
+            // RENDERER
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // LIGHTING (Soft ambient + direction for shadow)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(2, 4, 1);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            scene.add(directionalLight);
+
+            createCake();
+
+            // EVENT LISTENERS
+            window.addEventListener('resize', onWindowResize);
+            container.addEventListener('click', onCakeTap, false);
+            container.addEventListener('touchstart', onCakeTap, false); // Mobile Touch
+            resetBtn.addEventListener('click', resetCake);
+
+            animate();
+        }
+
+        function createCake() {
+            cakeGroup = new THREE.Group();
+
+            // 1. Plate
+            const plateGeometry = new THREE.CylinderGeometry(1.2, 1.2, 0.05, 32);
+            plateMesh = new THREE.Mesh(plateGeometry, plateMaterial);
+            plateMesh.position.y = 0.025;
+            plateMesh.receiveShadow = true;
+            cakeGroup.add(plateMesh);
+
+            // 2. Main Cake Body
+            // Realistic full cake, 2 tiers
+            cakeGeometry = new THREE.CylinderGeometry(0.9, 0.9, 0.6, 64, 1, false, 0, Math.PI * 2);
+            // CylinderGeometry maps texture index: [0: sides, 1: top, 2: bottom]
+            const cakeMaterialsArray = [frostingMaterial, frostingMaterial, frostingMaterial];
+            cakeMesh = new THREE.Mesh(cakeGeometry, cakeMaterialsArray);
+            cakeMesh.position.y = 0.35;
+            cakeMesh.castShadow = true;
+            cakeMesh.receiveShadow = true;
+            cakeGroup.add(cakeMesh);
+
+            // 3. Realistic Slice Geometry
+            // Defined as a custom shape / wedge to make it look like a real piece.
+            const sliceAngle = Math.PI / 4; // 1/8th of a cake
+            const sliceGeometry = new THREE.CylinderGeometry(0.9, 0.9, 0.6, 32, 1, false, 0, sliceAngle);
+
+            // IMPORTANT: Define face materials to show interior sponge on the slice faces.
+            // Index 0: Outer Frosting Curve, Index 1: Cut Face (Sponge), Index 2: Cut Face (Sponge), Index 3: Top (Frosting)
+            const sliceMaterialsArray = [frostingMaterial, spongeMaterial, spongeMaterial, frostingMaterial];
+            sliceMesh = new THREE.Mesh(sliceGeometry, sliceMaterialsArray);
+            sliceMesh.position.y = 0.35;
+            sliceMesh.position.z = 0.02; // Small offset to prevent geometry fighting
+            sliceMesh.rotation.y = -sliceAngle / 2; // Center it
+            sliceMesh.castShadow = true;
+            sliceMesh.visible = false; // Hidden at start
+            cakeGroup.add(sliceMesh);
+
+            scene.add(cakeGroup);
+        }
+
+        function onCakeTap(event) {
+            if (isCut) return;
+            event.preventDefault();
+            cutCakeAnimation();
+        }
+
+        function cutCakeAnimation() {
+            isCut = true;
+            
+            // 1. Modify Main Cake to look cut.
+            // This is complex in standard THREE.js. We achieve it by "hiding" the full cake 
+            // and showing a new geometry (main cake MINUS the slice gap). 
+            // For simplicity in this script, we'll use a technique: scale the slice to separate.
+            
+            cakeMesh.visible = false; // Hide the full cake
+
+            // 2. We need a second geometric piece: Main cake minus the slice gap.
+            // Define main body wedge (7/8ths)
+            const mainBodyAngle = (Math.PI * 2) - (Math.PI / 4);
+            const mainBodyGeometry = new THREE.CylinderGeometry(0.9, 0.9, 0.6, 64, 1, false, Math.PI/8, mainBodyAngle);
+            
+            // Define face materials for main cake to show sponge interior on cut edge.
+            const mainBodyMaterialsArray = [frostingMaterial, spongeMaterial, spongeMaterial, frostingMaterial];
+            const mainBodyMesh = new THREE.Mesh(mainBodyGeometry, mainBodyMaterialsArray);
+            mainBodyMesh.position.y = 0.35;
+            mainBodyMesh.rotation.y = Math.PI / 8; // Align gap
+            mainBodyMesh.castShadow = true;
+            mainBodyMesh.receiveShadow = true;
+            mainBodyMesh.name = 'mainBodyMesh'; // Set name for easy deletion on reset
+            cakeGroup.add(mainBodyMesh);
+
+            // 3. Show and animate the slice separation.
+            sliceMesh.visible = true;
+
+            const duration = 1200; // ms
+            const startTime = performance.now();
+
+            function animationStep(now) {
+                const progress = Math.min((now - startTime) / duration, 1.0);
+
+                if (progress < 1.0) {
+                    // Pull slice away: move along its own centered radial axis
+                    const separationDist = progress * 0.7; // How far it slides
+                    sliceMesh.position.x = -Math.sin(0) * separationDist;
+                    sliceMesh.position.z = 0.02 + Math.cos(0) * separationDist;
+
+                    // Slight lift as it separates
+                    sliceMesh.position.y = 0.35 + (progress * 0.1);
+
+                    // Slight twist for extra realism
+                    sliceMesh.rotation.y = (-Math.PI / 8) + (progress * 0.2);
+
+                    requestAnimationFrame(animationStep);
+                } else {
+                    // Show reset button at end
+                    resetBtn.style.visibility = 'visible';
+                }
+            }
+            requestAnimationFrame(animationStep);
         }
 
         function resetCake() {
-            stage.classList.remove('cutting', 'cut-complete');
-            msg.classList.remove('show-msg');
+            // Remove the mainBodyMesh that was added during cutting
+            const mainBody = cakeGroup.getObjectByName('mainBodyMesh');
+            if(mainBody) cakeGroup.remove(mainBody);
+
+            isCut = false;
+            cakeMesh.visible = true;
+            sliceMesh.visible = false;
+            resetBtn.style.visibility = 'hidden';
+            
+            // Reset slice geometry positions
+            sliceMesh.position.set(0, 0.35, 0.02);
+            sliceMesh.rotation.y = -Math.PI / 8;
         }
+
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Add subtle continuous rotation to the whole group to show 3D detail
+            if (cakeGroup && !isCut) {
+                cakeGroup.rotation.y += 0.003;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Run when page loads
+        init();
     </script>
 </body>
 </html>
