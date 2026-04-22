@@ -3,290 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Interactive Multi-Slice Cake</title>
+    <title>3-Tier Birthday Cake</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root {
-            --pink-bg-light: #fce4ec;
-            --pink-bg-dark: #f8bbd0;
-            --pink-ui: #ec407a;
-            --pink-text: #ad1457;
-        }
-
         body {
-            background: linear-gradient(135deg, var(--pink-bg-light) 0%, var(--pink-bg-dark) 100%);
-            color: var(--pink-text);
+            margin: 0;
+            background: linear-gradient(180deg, #f3e5f5 0%, #e1bee7 100%);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            height: 100vh;
-            width: 100vw;
-            margin: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            overscroll-behavior: none;
         }
-
-        .ui-panel {
+        #ui {
+            position: absolute;
+            top: 20px;
             text-align: center;
-            padding: 20px;
-            width: 100%;
-            pointer-events: none; /* Let clicks pass to the 3D canvas */
+            pointer-events: none;
             z-index: 10;
         }
-
-        .header h1 {
-            font-size: 1.8rem;
-            margin: 0 0 5px 0;
-            opacity: 0.9;
-        }
-
-        .header p {
-            font-size: 1rem;
-            opacity: 0.7;
+        h1 {
+            color: #7b1fa2;
+            text-shadow: 2px 2px white;
             margin: 0;
+            font-size: 2rem;
         }
-
-        /* The canvas container for Three.js */
-        #cake-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        #reset-btn {
-            pointer-events: auto; /* Enable clicks on the button */
-            padding: 12px 25px;
-            background-color: var(--pink-ui);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(236, 64, 122, 0.4);
-            cursor: pointer;
-            visibility: hidden; /* Start hidden */
-            transition: all 0.3s;
-        }
-
-        #reset-btn:active {
-            transform: scale(0.98);
-            background-color: #d81b60;
-        }
+        canvas { display: block; }
     </style>
 </head>
 <body>
 
-    <div class="ui-panel header">
-        <h1>Birthday Fun! 🎂</h1>
-        <p>Tap a piece to take a slice!</p>
-    </div>
-
-    <div id="cake-container"></div>
-
-    <div class="ui-panel footer">
-        <button id="reset-btn">Make a New Cake</button>
+    <div id="ui">
+        <h1>Happy Birthday! 🎂</h1>
+        <p style="color: #4a148c;">Drag to rotate the cake</p>
     </div>
 
     <script>
-        // THREE.js Scene Setup
-        let scene, camera, renderer, container;
-        let cakeGroup, plateMesh;
-        let totalWedges = 8; // Number of slices
-        let wedgesGroup = new THREE.Group(); // Holds only the 8 slice meshes
-        let raycaster = new THREE.Raycaster(); // For finding which piece was tapped
-        let mouse = new THREE.Vector2(); // Store interaction coordinates
-        let isMoving = false; // Prevent overlapping animations
-        let resetBtn = document.getElementById('reset-btn');
-
-        // Material Definitions for Realistic Multi-Side Textures
-        // 1. Frosting (Top & Sides) - Pink
-        const frostingMaterial = new THREE.MeshStandardMaterial({
-            color: 0xf48fb1,
-            roughness: 0.8,
-            metalness: 0.1,
-            flatShading: false
-        });
-
-        // 2. Interior (Cut Faces) - Sponge Cake color
-        const spongeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xfff3e0,
-            roughness: 0.9,
-            metalness: 0.0
-        });
-
-        // 3. Plate (White)
-        const plateMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            roughness: 0.2,
-            metalness: 0.0
-        });
+        let scene, camera, renderer, cake;
 
         function init() {
-            container = document.getElementById('cake-container');
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-
-            // SCENE & CAMERA
             scene = new THREE.Scene();
-            scene.background = null; // Use CSS background
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 8);
+            camera.lookAt(0, 1, 0);
 
-            camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
-            camera.position.set(0, 1.8, 3.5);
-            camera.lookAt(0, 0.5, 0);
-
-            // RENDERER
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(width, height);
+            renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
+            document.body.appendChild(renderer.domElement);
 
-            // LIGHTING (Soft ambient + direction for shadow)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
+            // Lights
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambient);
+            const directional = new THREE.DirectionalLight(0xffffff, 0.5);
+            directional.position.set(5, 10, 7);
+            directional.castShadow = true;
+            scene.add(directional);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(2, 4, 1);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 1024;
-            directionalLight.shadow.mapSize.height = 1024;
-            scene.add(directionalLight);
-
-            createCakeAndPlate();
-
-            // EVENT LISTENERS
-            window.addEventListener('resize', onWindowResize);
-            // Universal pointer listener: handles mouse, touch, and stylus
-            container.addEventListener('pointerdown', onCakeInteraction, false); 
-            resetBtn.addEventListener('click', resetCake);
-
+            createCake();
             animate();
         }
 
-        function createCakeAndPlate() {
-            cakeGroup = new THREE.Group();
-            wedgesGroup = new THREE.Group(); // Reset the slices group
+        function createCake() {
+            cake = new THREE.Group();
 
-            // 1. Plate
-            const plateGeometry = new THREE.CylinderGeometry(1.2, 1.2, 0.05, 32);
-            plateMesh = new THREE.Mesh(plateGeometry, plateMaterial);
-            plateMesh.position.y = 0.025;
-            plateMesh.receiveShadow = true;
-            cakeGroup.add(plateMesh);
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const purpleMat = new THREE.MeshStandardMaterial({ color: 0xba68c8 });
+            const roseMat = new THREE.MeshStandardMaterial({ color: 0xe57373 });
 
-            // 2. Create the 8 identical cake wedges and stack them
-            const wedgeAngle = (Math.PI * 2) / totalWedges; // Math.PI/4 for 8 slices
-            const fullAngleOffset = wedgeAngle / 2; // Center the pieces on axial intersections
+            // 3 Tiers (Bottom, Middle, Top)
+            const tiers = [
+                { r: 2, h: 1.2, y: 0.6 },
+                { r: 1.5, h: 1, y: 1.7 },
+                { r: 1, h: 0.8, y: 2.6 }
+            ];
 
-            // Geometry maps materials based on face index: 
-            // 0: Outer Curve (Frosting), 1: Cut Face (Sponge), 2: Cut Face (Sponge), 3: Top (Frosting)
-            const wedgeGeometry = new THREE.CylinderGeometry(0.9, 0.9, 0.6, 64, 1, false, 0, wedgeAngle);
-            const wedgeMaterialsArray = [frostingMaterial, spongeMaterial, spongeMaterial, frostingMaterial];
+            tiers.forEach((t, i) => {
+                // Main Tier Body
+                const geo = new THREE.CylinderGeometry(t.r, t.r, t.h, 64);
+                const mesh = new THREE.Mesh(geo, whiteMat);
+                mesh.position.y = t.y;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                cake.add(mesh);
 
-            for (let i = 0; i < totalWedges; i++) {
-                const wedgeMesh = new THREE.Mesh(wedgeGeometry, wedgeMaterialsArray);
-                wedgeMesh.position.y = 0.35;
-                wedgeMesh.castShadow = true;
-                wedgeMesh.receiveShadow = true;
-                wedgeMesh.rotation.y = -fullAngleOffset - (i * wedgeAngle); // Align next piece
-                
-                // Track interaction state: 0 = untouched, 1 = already cut/separate
-                wedgeMesh.userData = { cutState: 0, index: i }; 
-                wedgesGroup.add(wedgeMesh);
-            }
+                // Purple Icing Trim (bottom of each tier)
+                const trimGeo = new THREE.TorusGeometry(t.r, 0.05, 16, 100);
+                const trim = new THREE.Mesh(trimGeo, purpleMat);
+                trim.rotation.x = Math.PI / 2;
+                trim.position.y = t.y - (t.h / 2);
+                cake.add(trim);
 
-            cakeGroup.add(wedgesGroup);
-            scene.add(cakeGroup);
-        }
-
-        function onCakeInteraction(event) {
-            // Standardize coordinates from screen (CSS) to WebGL normalized (-1 to 1)
-            mouse.x = (event.clientX / container.clientWidth) * 2 - 1;
-            mouse.y = -(event.clientY / container.clientHeight) * 2 + 1;
-
-            if (isMoving) return; // Wait for current animation to end
-
-            raycaster.setFromCamera(mouse, camera);
-
-            // Find all pieces currently intersected by the pointer
-            const intersects = raycaster.intersectObjects(wedgesGroup.children);
-
-            if (intersects.length > 0) {
-                // The first intersection is the topmost/frontmost object
-                const clickedWedge = intersects[0].object;
-
-                // Check if the piece is already separate
-                if (clickedWedge.userData.cutState === 1) return; 
-
-                separateSliceAnimation(clickedWedge);
-            }
-        }
-
-        function separateSliceAnimation(wedge) {
-            isMoving = true;
-            wedge.userData.cutState = 1; // Mark as separate
-
-            // Determine the radial direction to slide out (center of its specific wedge)
-            const wedgeAngle = (Math.PI * 2) / totalWedges;
-            const fullAngleOffset = wedgeAngle / 2;
-            const radialAngle = -fullAngleOffset - (wedge.userData.index * wedgeAngle);
-
-            const duration = 1000; // ms
-            const startTime = performance.now();
-
-            function animationStep(now) {
-                const progress = Math.min((now - startTime) / duration, 1.0);
-
-                if (progress < 1.0) {
-                    // Pull slice away: move along its own radial axis
-                    const separationDist = progress * 0.7; // How far it slides
-                    wedge.position.x = Math.sin(radialAngle + fullAngleOffset) * separationDist;
-                    wedge.position.z = Math.cos(radialAngle + fullAngleOffset) * separationDist;
-
-                    // Slight lift as it separates (makes it look like a hand picked it up)
-                    wedge.position.y = 0.35 + (progress * 0.1);
-
-                    // Slight radial twist (adds weight and realism)
-                    wedge.rotation.y = radialAngle + (progress * 0.2);
-
-                    requestAnimationFrame(animationStep);
-                } else {
-                    isMoving = false; // Allow next interaction
-                    resetBtn.style.visibility = 'visible'; // Show reset button after first slice
+                // Add "Decorations" (Simple Roses/Balls)
+                for(let j=0; j<12; j++) {
+                    const angle = (j / 12) * Math.PI * 2;
+                    const decoration = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), roseMat);
+                    decoration.position.set(
+                        Math.cos(angle) * (t.r + 0.05),
+                        t.y,
+                        Math.sin(angle) * (t.r + 0.05)
+                    );
+                    cake.add(decoration);
                 }
+            });
+
+            // The Candle
+            const candleGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 12);
+            const candleMat = new THREE.MeshStandardMaterial({ color: 0xffeb3b });
+            const candle = new THREE.Mesh(candleGeo, candleMat);
+            candle.position.y = 3.25;
+            cake.add(candle);
+
+            // The Flame
+            const flameGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const flameMat = new THREE.MeshBasicMaterial({ color: 0xffa000 });
+            const flame = new THREE.Mesh(flameGeo, flameMat);
+            flame.position.y = 0.3;
+            candle.add(flame);
+
+            scene.add(cake);
+        }
+
+        // Basic Mouse/Touch Rotation
+        let isDragging = false;
+        let previousMouseX = 0;
+
+        document.addEventListener('pointerdown', () => isDragging = true);
+        document.addEventListener('pointerup', () => isDragging = false);
+        document.addEventListener('pointermove', (e) => {
+            if (isDragging && cake) {
+                const deltaX = e.clientX - previousMouseX;
+                cake.rotation.y += deltaX * 0.01;
             }
-            requestAnimationFrame(animationStep);
-        }
-
-        function resetCake() {
-            scene.remove(cakeGroup);
-            createCakeAndPlate(); // Re-build from scratch for a perfect reset
-            resetBtn.style.visibility = 'hidden';
-            isMoving = false;
-        }
-
-        function onWindowResize() {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
+            previousMouseX = e.clientX;
+        });
 
         function animate() {
             requestAnimationFrame(animate);
-
-            // Subtle continuous display rotation of the whole setup
-            if (cakeGroup) {
-                cakeGroup.rotation.y += 0.003;
-            }
-
+            if (!isDragging) cake.rotation.y += 0.005; // Auto-rotate
             renderer.render(scene, camera);
         }
 
-        // Run when page loads
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
         init();
     </script>
 </body>
