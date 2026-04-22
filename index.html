@@ -2,93 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shagun's Favorites Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Birthday Cake Cutting</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <div class="quiz-container">
-        <div id="quiz-box">
-            <h1 class="quiz-title">💙 Happyyyyy 💙</h1>
-            <h2 id="question-text">Loading...</h2>
-            
-            <div class="options-container">
-                <button class="option-btn" onclick="checkAnswer(0)"></button>
-                <button class="option-btn" onclick="checkAnswer(1)"></button>
-                <button class="option-btn" onclick="checkAnswer(2)"></button>
-            </div>
+    <div class="main-container">
+        <div class="header">
+            <h1>Happy Birthday! 🎂</h1>
+            <p>Tap the cake to cut a slice</p>
+        </div>
 
-            <div id="feedback" class="hidden"></div>
-            <button id="next-btn" class="hidden" onclick="loadQuestion()">Next Question</button>
+        <div id="cake-container"></div>
+
+        <div class="footer">
+            <button id="reset-btn">Make a New Cake</button>
         </div>
     </div>
 
-    <script>
-        const quizData = [
-            { q: "What is Shagun's favorite food?", options: ["Pizza", "Vadapav", "Pasta"], correct: 1 },
-            { q: "What are her favorite travel places?", options: ["Manali & Ladakh", "Goa & Kerala", "Paris & Dubai"], correct: 0 },
-            { q: "Which dairy confections does she love?", options: ["Cakes & Pastries", "Chocolate & Ice cream", "Cheese & Yogurt"], correct: 1 },
-            { q: "What is her favorite car?", options: ["BMW", "Audi", "Mercedes"], correct: 2 },
-            { q: "What is her favorite bike?", options: ["Royal Enfield", "Hayabusa", "KTM"], correct: 0 },
-            { q: "What is her favorite hobby?", options: ["Reading", "Travelling", "Painting"], correct: 1 },
-            { q: "What are the things she wants to fly?", options: ["Kites & Drones", "Birds & Balloons", "Planes & Fighter Jets"], correct: 2 },
-            { q: "What is her favorite weather (sometimes)?", options: ["Sunny", "Rainy", "Snowy"], correct: 1 },
-            { q: "What is her favorite animal?", options: ["Cat", "Rabbit", "It should be animal"], correct: 2 }, // Added Dog as a classic choice
-            { q: "What is her favorite clothes category?", options: ["Western", "Casual", "Traditional"], correct: 2 },
-            { q: "What is her favorite juice?", options: ["Orange, Banana, Mango", "Apple & Grape", "Pineapple"], correct: 0 },
-            { q: "What is her favorite shake?", options: ["Vanilla", "Chocolate & Strawberry", "Blueberry"], correct: 1 },
-            { q: "If she goes to the mall, what does she buy ?", options: ["Makeup", "Shoes", "Jewelry"], correct: 1 }
-        ];
-
-        let currentIdx = 0;
-
-        function loadQuestion() {
-            const current = quizData[currentIdx];
-            document.getElementById('question-text').innerText = current.q;
-            const buttons = document.querySelectorAll('.option-btn');
-            
-            buttons.forEach((btn, index) => {
-                btn.innerText = current.options[index];
-                btn.disabled = false;
-                btn.classList.remove('correct', 'wrong');
-            });
-
-            document.getElementById('feedback').classList.add('hidden');
-            document.getElementById('next-btn').classList.add('hidden');
-        }
-
-        function checkAnswer(selected) {
-            const current = quizData[currentIdx];
-            const buttons = document.querySelectorAll('.option-btn');
-            const feedback = document.getElementById('feedback');
-            
-            buttons.forEach(btn => btn.disabled = true);
-
-            if (selected === current.correct) {
-                buttons[selected].classList.add('correct');
-                feedback.innerText = "Correct! You are Awesomeee Cutieee! ✨";
-                feedback.style.color = "#2c3e50";
-            } else {
-                buttons[selected].classList.add('wrong');
-                buttons[current.correct].classList.add('correct');
-                feedback.innerText = "Oops! Not quite right. 💙";
-                feedback.style.color = "#5dade2";
-            }
-
-            feedback.classList.remove('hidden');
-            
-            if (currentIdx < quizData.length - 1) {
-                document.getElementById('next-btn').classList.remove('hidden');
-                currentIdx++;
-            } else {
-                document.getElementById('next-btn').innerText = "Quiz Finished!";
-                document.getElementById('next-btn').classList.remove('hidden');
-                document.getElementById('next-btn').onclick = null;
-            }
-        }
-
-        loadQuestion();
-    </script>
+    <script src="cake.js"></script>
 </body>
 </html>
